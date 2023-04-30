@@ -9,7 +9,7 @@ private:
 public:
     Stack();
     bool empty();
-    void push(int new_key);
+    void push(int);
     int peek();
     int pop();
 };

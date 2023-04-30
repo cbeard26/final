@@ -1,5 +1,6 @@
 #include "stack.h"
 
+
 Stack::Stack() {
     head = nullptr;
 }
