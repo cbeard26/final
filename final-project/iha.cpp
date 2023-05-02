@@ -7,8 +7,8 @@
 #include<ctime>
 #include<cmath>
 
-const int NUM_OF_BASES = 4;
 const int NUM_OF_PERMUTATIONS = 19;
+const int PERM_1_MAX = 380;
 
 IHA::IHA() {
 
@@ -29,8 +29,8 @@ int IHA::bin_to_dec(std::string bin) {
     }
     int total = 0;
     int len = s.size();
-    for (int i = 1; i <= len; i++) {
-        if (s[len - i] == '1') {
+    for (int i = 0; i < len; i++) {
+        if (s[len - (i + 1)] == '1') {
             total += pow(2, i);
         }
     }
@@ -49,7 +49,6 @@ std::vector<std::string> IHA::to_bichar_vec(std::string str) {
     std::string left = dec_to_bin(bichars.size() % 16);
     while (bichars.size() % 16 != 0) {
         bichars.push_back(left);
-        std::cout << left << " as decimal: " << bin_to_dec(left) << std::endl;;
     }
     return bichars;
 }
@@ -64,12 +63,32 @@ std::string IHA::hash(std::string inp) {
     return w1 + w2 + w3 + w4;
 }
 
-void IHA::permute_one(std::vector<std::string>) {
-    std::cout << "permute1" << std::endl; 
+void IHA::permute_one(std::vector<std::string> bichars) {
+    Stack s;
+    int curr = 0;
+    for (int i = 0; i < bichars.size(); i++) {
+        curr += bin_to_dec(bichars[i]);
+        if (i % 4 == 0) {
+            s.push(curr);
+            curr = 0;
+        }
+    }
+    while (!s.empty()) {
+        int n = s.pop();
+        if (n > PERM_1_MAX) {
+            w1 = dec_to_bin((bin_to_dec(w1) + n) % 256);
+        } else if (n > floor(2 * PERM_1_MAX / 3)) {
+            w2 = dec_to_bin((bin_to_dec(w2) * 3 * n) % 256);
+        } else if (n > floor(PERM_1_MAX / 3)) {
+            w3 = dec_to_bin(((256 - n) * bin_to_dec(w3)) % 256);
+        } else {
+            w4 = dec_to_bin((4 * bin_to_dec(w1)) + (3 * bin_to_dec(w2)) + (2 * bin_to_dec(w3)) + bin_to_dec(w4) % 256);
+        }
+    }
 }
 
 void IHA::permute_two(std::vector<std::string>) {
-    std::cout << "permute2" << std::endl;
+    
 }
 
-// Credit to this site for the simplified binary number retrieval https://stackoverflow.com/questions/22746429/c-decimal-to-binary-converting
+// Credit to this site for the simplified binary number retrieval: https://en.cppreference.com/w/cpp/utility/bitset
