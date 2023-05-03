@@ -1,3 +1,11 @@
+/**
+ * This program takes a string as input and outputs a 4 byte hash message representing that string
+ * 
+ * @file main.cpp
+ * @author Charlie Beard
+ * @date 3 May, 2023
+ */
+
 #include <iostream>
 #include "iha.h"
 
