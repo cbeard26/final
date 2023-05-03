@@ -3,9 +3,12 @@
 
 #include "node.h"
 
+/**
+ * @brief stores node objects in a first-in-last-out manner
+*/
 class Stack {
 private:
-    Node* head;
+    Node* head; // pointer to top node of the stack
 public:
     Stack();
     bool empty();

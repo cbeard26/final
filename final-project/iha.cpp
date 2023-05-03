@@ -1,17 +1,20 @@
 #include "iha.h"
-#include<iostream>
-#include<string>
-#include<bitset>
-#include<vector>
-#include<cstdlib>
-#include<ctime>
-#include<cmath>
+#include <iostream>
+#include <string>
+#include <bitset>
+#include <vector>
+#include <cstdlib>
+#include <ctime>
+#include <cmath>
 
-const int NUM_OF_PERMUTATIONS = 19;
+const int NUM_OF_PERMUTATIONS = 4;
 const int PERM_1_MAX = 380;
 const int NUM_BIT_SIZE = 256;
 const int NUM_BIT_SIZE_SQRT = 16;
 
+/**
+ * @brief IHA object constructor, initializes class variables (words and vectoer of words)
+*/
 IHA::IHA() {
 
     srand (time(NULL));
@@ -27,6 +30,12 @@ IHA::IHA() {
     words = {w1c, w2c, w3c, w4c};
 }
 
+/**
+ * @brief converts a number from binary (as string) to decimal (as integer)
+ * 
+ * @param bin a binary number stored as a string
+ * @return the integer form of bin
+*/
 int IHA::bin_to_dec(std::string bin) {
     std::vector<char> s;
     for (char c : bin) {
@@ -42,12 +51,25 @@ int IHA::bin_to_dec(std::string bin) {
     return total;
 }
 
+/**
+ * @brief converts a number from decimal (as integer) to binary (as string).
+ * uses the method to_string from the bitset library. 
+ * Found here: https://en.cppreference.com/w/cpp/utility/bitset
+ * 
+ * @param n an integer 
+ * @return the binary form of n, as a string
+*/
 std::string IHA::dec_to_bin(int n) {
     return std::bitset<8>(n).to_string();
 }
 
+/**
+ * @brief takes a string and returns a vector containing binary representations of the ASCII values of each character
+ * 
+ * @param str a string
+ * @return a list of the binary numbers stored as strings
+*/
 std::vector<std::string> IHA::to_bichar_vec(std::string str) {
-    std::vector<std::string> bichars;
     for (char ch : str) {
         bichars.push_back(dec_to_bin(int(ch)));
     }
@@ -58,61 +80,80 @@ std::vector<std::string> IHA::to_bichar_vec(std::string str) {
     return bichars;
 }
 
+/**
+ * @brief takes a string and hashes it into a unique (hopefully) binary message
+ * 
+ * @param inp the string to be hashed
+ * @return a 32 bit (4 byte) binary message representing the hashed string
+*/
 std::string IHA::hash(std::string inp) {
-    std::vector<std::string> bichars = to_bichar_vec(inp);
-
+    bichars = to_bichar_vec(inp);
     for (int i = 0; i < NUM_OF_PERMUTATIONS; i++) {
-        permute_one(bichars);
-        permute_two(bichars);
+        permute_one();
+        permute_two();
     }
     std::string key = w1 + " " + w2 + " " + w3 + " " + w4;
-    reset_words();
+    reset();
     return key;
 }
 
-
-
-void IHA::permute_one(std::vector<std::string> bichars) {
+/**
+ * @brief distributes tasks to the four primary sub permutor functions
+*/
+void IHA::permute_one() {
     if (bichars.size() % 4 == 0) {
-        sub_one(bichars);
+        sub_one();
     } else if (bichars.size() % 4 == 1) {
-        sub_two(bichars);
+        sub_two();
     } else if (bichars.size() % 4 == 2) {
-        sub_three(bichars);
+        sub_three();
     } else {
-        sub_four(bichars);
+        sub_four();
     }
 }
 
-//reverse
-void IHA::sub_one(std::vector<std::string> bichars) {
+/**
+ * @brief permutes the bichars vector by reversing its order
+ * directs to sub_four
+*/
+void IHA::sub_one() {
     std::vector<std::string> bichars_copy = bichars;
     for (int i = 0; i < bichars_copy.size(); i++) {
         bichars[i] = bichars_copy[bichars_copy.size() - (i + 1)];
     }
-    sub_four(bichars);
+    sub_four();
 }
 
-//equal caesar
-void IHA::sub_two(std::vector<std::string> bichars) {
+/**
+ * @brief permutes the bichars vector by appling a caesar cipher to it
+ * directs to sub_four
+*/
+void IHA::sub_two() {
     for (int i = 0; i < bichars.size(); i++) {
         bichars[i] = dec_to_bin((bin_to_dec(bichars[i]) + (NUM_BIT_SIZE_SQRT)) % NUM_BIT_SIZE);
     }
-    sub_four(bichars);
+    sub_four();
 }
 
-//unequal caesar + equal caesar
-void IHA::sub_three(std::vector<std::string> bichars) {
+/**
+ * @brief permutes the bichars vector by applying two caesar ciphers to it, 
+ * one of flat value and one of variable value
+ * directs to sub_four
+*/
+void IHA::sub_three() {
     for (int i = 0; i < bichars.size(); i++) {
         bichars[i] = dec_to_bin((bin_to_dec(bichars[i]) + (bin_to_dec(bichars[i]) % NUM_BIT_SIZE_SQRT)) % NUM_BIT_SIZE);
     }
     for (int i = 0; i < bichars.size(); i++) {
         bichars[i] = dec_to_bin((bin_to_dec(bichars[i]) + (NUM_BIT_SIZE_SQRT)) % NUM_BIT_SIZE);
     }
-    sub_four(bichars);
+    sub_four();
 }
 
-void IHA::sub_four(std::vector<std::string> bichars) {
+/**
+ * @brief shuffles the bichars in an unpredictable manner using several stacks
+*/
+void IHA::sub_four() {
     Stack s1;
     Stack s2;
     Stack s3;
@@ -127,7 +168,7 @@ void IHA::sub_four(std::vector<std::string> bichars) {
     }
     int c = 0;
     while (!s1.empty() && !s2.empty() && !s3.empty()) {
-        bichars[c] = dec_to_bin((bin_to_dec(bichars[c]) + s1.pop() + s2.pop() + s3.pop()));
+        bichars[c] = dec_to_bin((bin_to_dec(bichars[c]) + s1.pop() + s2.pop() + s3.pop()) % NUM_BIT_SIZE);
         c++;
     }
     for (int c; c < bichars.size(); c++) {
@@ -135,7 +176,10 @@ void IHA::sub_four(std::vector<std::string> bichars) {
     }
 }
 
-void IHA::permute_two(std::vector<std::string> bichars) {
+/**
+ * @brief modifies the hash message words based on the contents of bichars
+*/
+void IHA::permute_two() {
     Stack s;
     int curr = 0;
     for (int i = 0; i < bichars.size(); i++) {
@@ -158,16 +202,19 @@ void IHA::permute_two(std::vector<std::string> bichars) {
                 w3 = dec_to_bin(((NUM_BIT_SIZE - n) * bin_to_dec(w3)) % NUM_BIT_SIZE);
             }
         } else {
-                w4 = dec_to_bin((4 * bin_to_dec(w1)) + (3 * bin_to_dec(w2)) + (2 * bin_to_dec(w3)) + bin_to_dec(w4) % NUM_BIT_SIZE);
+            w4 = dec_to_bin((4 * bin_to_dec(w1)) + (3 * bin_to_dec(w2)) + (2 * bin_to_dec(w3)) + bin_to_dec(w4) % NUM_BIT_SIZE);
         }
     }
 }
 
-void IHA::reset_words() {
+/**
+ * @brief resets the bichars list and the words to their original state
+ * to allow the user to hash a new message in the same environments
+*/
+void IHA::reset() {
     w1 = words[0];
     w2 = words[1];
     w3 = words[2];
     w4 = words[3];
+    bichars.clear();
 }
-
-// Credit to this site for the simplified binary number retrieval: https://en.cppreference.com/w/cpp/utility/bitset
